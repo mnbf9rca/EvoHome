@@ -1,13 +1,28 @@
 import logging
-from datetime import datetime, timedelta
 from json import dumps
-from time import time
-from typing import Tuple
-import dateutil.parser
+from os import getenv
 
+import dateutil.parser
 import requests
 
-from helpers import urljoin
+
+def urljoin(*args):
+    """
+    Joins given arguments into an url. Trailing but not leading slashes are
+    stripped for each argument.
+    """
+
+    return "/".join(map(lambda x: str(x).rstrip('/'), args))
+
+
+def getEnvVar(var_name):
+    """
+    fetches an environment variable or raises an exception if not found
+    """
+    val = getenv(var_name)
+    if not val:
+        raise Exception(f"can't find envvar {var_name}")
+    return val
 
 
 class EvohomeClient(object):
@@ -77,7 +92,7 @@ class EvohomeClient(object):
         if not response.ok:
             raise Exception(
                 f"Didn't get HTTP 200 (OK) response - status_code from server: {response.status_code}\n{response.text}")
-        return [{"name":x["name"], "locationID": x["locationID"]} for x in response.json()]
+        return [{"name": x["name"], "locationID": x["locationID"]} for x in response.json()]
 
     def get_one_location_data(self, locationId: int) -> dict:
         '''Fetches the device info for a given location.
@@ -110,6 +125,7 @@ class EvohomeClient(object):
             locationId  identifier of the location
 
         Returns
+            locationId
             dict of {datetime, deviceId, name, heatSetpoint[, heatSetpoint]]}
             datetime            posix timestamp of response
             deviceId            Identifier of the device.
@@ -119,7 +135,8 @@ class EvohomeClient(object):
         response_timestamp, this_location_data = self.get_one_location_data(locationId)
         temps = []
         for d in this_location_data["devices"]:
-            this_temps = {'datetime': response_timestamp,
+            this_temps = {'locationId': locationId,
+                          'datetime': response_timestamp,
                           'deviceId': d["deviceID"],
                           'name': d["name"],
                           'heatSetpoint': d["thermostat"]["changeableValues"]["heatSetpoint"]["value"]}
