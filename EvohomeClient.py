@@ -1,6 +1,5 @@
 import logging
 from json import dumps
-from os import getenv
 
 import dateutil.parser
 import requests
@@ -13,16 +12,6 @@ def urljoin(*args):
     """
 
     return "/".join(map(lambda x: str(x).rstrip('/'), args))
-
-
-def getEnvVar(var_name):
-    """
-    fetches an environment variable or raises an exception if not found
-    """
-    val = getenv(var_name)
-    if not val:
-        raise Exception(f"can't find envvar {var_name}")
-    return val
 
 
 class EvohomeClient(object):
